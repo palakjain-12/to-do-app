@@ -15,7 +15,7 @@ connectMongoDB();
 // Middleware - Updated CORS for production
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? [process.env.FRONTEND_URL, 'https://your-vercel-app.vercel.app']
+    ? true // Allow all origins in production for Vercel
     : ['http://localhost:3001', 'http://localhost:3000'],
   credentials: true
 }));
@@ -30,29 +30,21 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 
 // Basic route
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
   res.json({ message: 'Todo API with Authentication is running!' });
 });
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Serve static files in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../frontend/build')));
-  
-  app.get('*', (req, res) => {
-    if (req.path.startsWith('/api')) {
-      res.status(404).json({ error: 'API endpoint not found' });
-    } else {
-      res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
-    }
-  });
-}
+// Catch-all handler for API routes
+app.get('/api/*', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found' });
+});
 
-// For Vercel deployment
+// For Vercel deployment - export the app
 module.exports = app;
 
 // For local development

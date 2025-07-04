@@ -17,7 +17,11 @@ const TodoApp = () => {
   const { token } = useAuth();
 
   // API base URL - use environment variable or default
+<<<<<<< HEAD
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api/tasks';
+=======
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/tasks';
+>>>>>>> bd1355a (For Deploying)
 
   // Fetch tasks from backend with authentication
   const fetchTasks = useCallback(async () => {

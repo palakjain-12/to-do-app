@@ -1,24 +1,26 @@
+// api/index.js
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const connectMongoDB = require('./config/mongodb');
+
+// Import database connections
+const connectMongoDB = require('../backend/config/mongodb');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
 connectMongoDB();
 
 // Middleware
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? true : ['http://localhost:3000'],
+  origin: true, // Allow all origins for simplicity
   credentials: true
 }));
 app.use(express.json());
 
 // Import routes
-const taskRoutes = require('./routes/tasks');
-const authRoutes = require('./routes/auth');
+const taskRoutes = require('../backend/routes/tasks');
+const authRoutes = require('../backend/routes/auth');
 
 // Use routes
 app.use('/api/auth', authRoutes);
@@ -34,12 +36,5 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Catch-all handler for API routes
-app.use((req, res) => {
-  res.status(404).json({ error: 'API endpoint not found' });
-});
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Export for Vercel
+module.exports = app;

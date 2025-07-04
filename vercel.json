@@ -1,19 +1,29 @@
-// vercel.json
 {
   "version": 2,
   "builds": [
     {
-      "src": "frontend",
-      "dest": "public"
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build"
+    },
+    {
+      "src": "backend/server.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
+      "src": "/api/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
       "src": "/(.*)",
-      "dest": "public/index.html"
+      "dest": "frontend/build/$1"
     }
   ],
   "env": {
-    "REACT_APP_API_URL": "https://your-vercel-app.vercel.app/api/tasks"
+    "MONGODB_URI": "mongodb+srv://Palak:1SvKz8TGEmj6Gxle@todo-cluster.weeat8b.mongodb.net/",
+    "DATABASE_URL": "postgresql://neondb_owner:npg_Zq21IEcaKFDQ@ep-orange-cherry-a86goyev-pooler.eastus2.azure.neon.tech/todo_tasks?sslmode=require&channel_binding=require",
+    "JWT_SECRET": "your_super_secret_jwt_key_here_make_it_long_and_random",
+    "FRONTEND_URL": "https://your-vercel-app.vercel.app"
   }
 }

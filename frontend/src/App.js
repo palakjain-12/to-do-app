@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Header from './components/Header';
@@ -19,15 +19,8 @@ const TodoApp = () => {
   // API base URL - use environment variable or default
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api/tasks';
 
-  // Fetch all tasks when component mounts
-  useEffect(() => {
-    if (token) {
-      fetchTasks();
-    }
-  }, [token]);
-
   // Fetch tasks from backend with authentication
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -63,7 +56,14 @@ const TodoApp = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_URL, token]);
+
+  // Fetch all tasks when component mounts
+  useEffect(() => {
+    if (token) {
+      fetchTasks();
+    }
+  }, [token, fetchTasks]);
 
   // Add new task to backend with authentication
   const addTask = async (text) => {

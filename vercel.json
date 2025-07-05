@@ -20,6 +20,12 @@
       "dest": "frontend/build/$1"
     }
   ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/"
+    }
+  ],
   "env": {
     "MONGODB_URI": "mongodb+srv://Palak:1SvKz8TGEmj6Gxle@todo-cluster.weeat8b.mongodb.net/",
     "DATABASE_URL": "postgresql://neondb_owner:npg_Zq21IEcaKFDQ@ep-orange-cherry-a86goyev-pooler.eastus2.azure.neon.tech/todo_tasks?sslmode=require&channel_binding=require",

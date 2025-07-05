@@ -11,7 +11,7 @@ connectMongoDB();
 
 // Middleware
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? true : ['http://localhost:3000'],
+  origin:process.env.Frontend_URL ,
   credentials: true
 }));
 app.use(express.json());

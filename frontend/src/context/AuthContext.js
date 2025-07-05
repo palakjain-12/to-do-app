@@ -15,7 +15,10 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('todo_token'));
   const [loading, setLoading] = useState(true);
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
+  // Use production API URL or fall back to development
+  const API_URL = process.env.NODE_ENV === 'production' 
+    ? '/api' 
+    : 'http://localhost:5000/api';
 
   // Check if user is authenticated when component mounts
   useEffect(() => {

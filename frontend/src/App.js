@@ -16,8 +16,10 @@ const TodoApp = () => {
   const [error, setError] = useState(null);
   const { token } = useAuth();
 
-  // API base URL - use environment variable or default
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api/tasks';
+  // API base URL - use relative path for production
+  const API_URL = process.env.NODE_ENV === 'production' 
+    ? '/api/tasks' 
+    : 'http://localhost:5000/api/tasks';
 
   // Fetch tasks from backend with authentication
   const fetchTasks = useCallback(async () => {
@@ -50,7 +52,7 @@ const TodoApp = () => {
       console.error('Error fetching tasks:', err);
       setError(
         err.message.includes('fetch') 
-          ? 'Cannot connect to server. Make sure your backend is running on port 5000.'
+          ? 'Cannot connect to server. Please check your internet connection.'
           : `Failed to load tasks: ${err.message}`
       );
     } finally {

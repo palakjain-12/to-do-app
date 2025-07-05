@@ -6,6 +6,7 @@ require('dotenv').config();
 // Import database connections
 const connectMongoDB = require('../backend/config/mongodb');
 
+// Create Express app
 const app = express();
 
 // Connect to MongoDB
@@ -13,7 +14,7 @@ connectMongoDB();
 
 // Middleware
 app.use(cors({
-  origin: true, // Allow all origins for simplicity
+  origin: process.env.FRONTEND_URL || true,
   credentials: true
 }));
 app.use(express.json());
@@ -36,5 +37,10 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Export for Vercel
+// Handle all other routes
+app.all('*', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found' });
+});
+
+// Export for Vercel serverless functions
 module.exports = app;

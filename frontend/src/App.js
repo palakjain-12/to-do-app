@@ -16,10 +16,8 @@ const TodoApp = () => {
   const [error, setError] = useState(null);
   const { token } = useAuth();
 
-  // API base URL - use your backend URL for production
-  const API_URL = process.env.NODE_ENV === 'production' 
-    ? 'https://to-do-app-if4l.onrender.com/api/tasks' 
-    : 'http://localhost:5000/api/tasks';
+  // API base URL - Always use your Render backend URL
+  const API_URL = 'https://to-do-app-if4l.onrender.com/api/tasks';
 
   // Fetch tasks from backend with authentication
   const fetchTasks = useCallback(async () => {

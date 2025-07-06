@@ -16,24 +16,28 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // Use production API URL or fall back to development
-  const API_URL = "https://to-do-app-if4l.onrender.com/api";
+  const API_URL = "https://to-do-app-if4l.onrender.com";
 
   // Check if user is authenticated when component mounts
   useEffect(() => {
     const verifyToken = async () => {
       if (token) {
         try {
+          console.log('Verifying token with URL:', `${API_URL}/auth/verify`);
           const response = await fetch(`${API_URL}/auth/verify`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
           });
 
+          console.log('Verify response status:', response.status);
+
           if (response.ok) {
             const data = await response.json();
             setUser(data.user);
           } else {
             // Token is invalid
+            console.log('Token verification failed, removing token');
             localStorage.removeItem('todo_token');
             setToken(null);
           }
@@ -51,6 +55,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
+      console.log('Attempting login with URL:', `${API_URL}/auth/login`);
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
@@ -59,7 +64,11 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify({ email, password }),
       });
 
+      console.log('Login response status:', response.status);
+      console.log('Login response headers:', response.headers);
+
       const data = await response.json();
+      console.log('Login response data:', data);
 
       if (response.ok) {
         localStorage.setItem('todo_token', data.token);
@@ -67,7 +76,7 @@ export const AuthProvider = ({ children }) => {
         setUser(data.user);
         return { success: true };
       } else {
-        return { success: false, error: data.error };
+        return { success: false, error: data.error || 'Login failed' };
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -77,6 +86,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (username, email, password) => {
     try {
+      console.log('Attempting registration with URL:', `${API_URL}/auth/register`);
       const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: {
@@ -85,7 +95,10 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify({ username, email, password }),
       });
 
+      console.log('Registration response status:', response.status);
+
       const data = await response.json();
+      console.log('Registration response data:', data);
 
       if (response.ok) {
         localStorage.setItem('todo_token', data.token);
@@ -93,7 +106,7 @@ export const AuthProvider = ({ children }) => {
         setUser(data.user);
         return { success: true };
       } else {
-        return { success: false, error: data.error };
+        return { success: false, error: data.error || 'Registration failed' };
       }
     } catch (error) {
       console.error('Registration error:', error);

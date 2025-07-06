@@ -9,11 +9,25 @@ const PORT = process.env.PORT || 5000;
 // Connect to MongoDB
 connectMongoDB();
 
+// Single CORS configuration
+const corsOptions = {
+  origin: [
+    'https://soft-elf-876a48.netlify.app', // Production URL
+    'http://localhost:3000',               // Development URL
+    'http://127.0.0.1:3000',              // Alternative localhost
+    'http://localhost:3001',               // Alternative port
+    process.env.Frontend_URL               // Environment variable
+  ].filter(Boolean), // Remove any undefined values
+  credentials: true,
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
+
+// Apply CORS middleware once
+app.use(cors(corsOptions));
+
 // Middleware
-app.use(cors({
-  origin:process.env.Frontend_URL ,
-  credentials: true
-}));
 app.use(express.json());
 
 // Import routes
@@ -42,4 +56,5 @@ app.use((req, res) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log('CORS enabled for origins:', corsOptions.origin);
 });

@@ -3,7 +3,7 @@ require('dotenv').config();
 
 // Enhanced PostgreSQL configuration
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL, // Changed from DB_HOST to DATABASE_URL
+  connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   // Connection pool settings
   max: 20,
@@ -33,31 +33,5 @@ const testConnection = async () => {
   }
 };
 
-// Function to create tables if they don't exist
-const createTables = async () => {
-  try {
-    const client = await pool.connect();
-    
-    // Create tasks table
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS tasks (
-        id SERIAL PRIMARY KEY,
-        title VARCHAR(255) NOT NULL,
-        description TEXT,
-        completed BOOLEAN DEFAULT FALSE,
-        user_id VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
-    console.log('Tasks table created/verified');
-    client.release();
-  } catch (err) {
-    console.error('Error creating tables:', err);
-    throw err;
-  }
-};
-
 // Export both pool and test function
-module.exports = { pool, testConnection, createTables };
+module.exports = { pool, testConnection };

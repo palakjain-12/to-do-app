@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // Use production API URL or fall back to development
-  const API_URL = "https://to-do-app-if4l.onrender.com";
+  const API_URL = "https://to-do-app-if4l.onrender.com/api";
 
   // Check if user is authenticated when component mounts
   useEffect(() => {

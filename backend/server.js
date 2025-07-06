@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const connectMongoDB = require('./config/mongodb');
-const { testConnection } = require('./config/database');
+const { testConnection, createTables } = require('./config/database'); // Added createTables
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -15,6 +15,9 @@ const initializeDatabases = async () => {
     
     // Test PostgreSQL connection
     await testConnection();
+    
+    // Create tables if they don't exist
+    await createTables();
     
     console.log('✅ All databases connected successfully');
   } catch (error) {
@@ -33,7 +36,7 @@ const corsOptions = {
     'http://localhost:3000',               // Development URL
     'http://127.0.0.1:3000',              // Alternative localhost
     'http://localhost:3001',               // Alternative port
-    process.env.Frontend_URL               // Environment variable
+    process.env.FRONTEND_URL               // Changed from Frontend_URL to FRONTEND_URL
   ].filter(Boolean), // Remove any undefined values
   credentials: true,
   optionsSuccessStatus: 200,
@@ -64,7 +67,7 @@ app.use('/api/tasks', taskRoutes);
 
 // Root route - redirect to frontend
 app.get('/', (req, res) => {
-  const frontendUrl = process.env.Frontend_URL || 'https://soft-elf-876a48.netlify.app';
+  const frontendUrl = process.env.FRONTEND_URL || 'https://soft-elf-876a48.netlify.app'; // Changed from Frontend_URL
   res.redirect(`${frontendUrl}`);
 });
 
@@ -134,7 +137,7 @@ process.on('SIGINT', () => {
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📱 Frontend URL: ${process.env.Frontend_URL || 'https://soft-elf-876a48.netlify.app'}`);
+  console.log(`📱 Frontend URL: ${process.env.FRONTEND_URL || 'https://soft-elf-876a48.netlify.app'}`);
   console.log('🔗 CORS enabled for origins:', corsOptions.origin);
 });
 

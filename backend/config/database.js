@@ -3,7 +3,7 @@ require('dotenv').config();
 
 // Enhanced PostgreSQL configuration
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.DB_HOST,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   // Connection pool settings
   max: 20,

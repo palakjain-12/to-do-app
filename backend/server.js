@@ -42,7 +42,7 @@ app.use('/api/tasks', taskRoutes);
 app.get('/', (req, res) => {
   // Redirect to your frontend login page
   const frontendUrl = process.env.Frontend_URL || 'https://soft-elf-876a48.netlify.app';
-  res.redirect(`${frontendUrl}/login`);
+  res.redirect(`${frontendUrl}`);
 });
 
 // Basic route

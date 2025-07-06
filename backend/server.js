@@ -38,17 +38,11 @@ const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 
-// Root route
+// Root route - redirect to frontend login page
 app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Todo API with Authentication is running!',
-    version: '1.0.0',
-    endpoints: {
-      health: '/api/health',
-      auth: '/api/auth',
-      tasks: '/api/tasks'
-    }
-  });
+  // Redirect to your frontend login page
+  const frontendUrl = process.env.Frontend_URL || 'https://soft-elf-876a48.netlify.app';
+  res.redirect(`${frontendUrl}/login`);
 });
 
 // Basic route

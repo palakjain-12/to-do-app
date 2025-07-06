@@ -38,6 +38,19 @@ const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Todo API with Authentication is running!',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      tasks: '/api/tasks'
+    }
+  });
+});
+
 // Basic route
 app.get('/api', (req, res) => {
   res.json({ message: 'Todo API with Authentication is running!' });
@@ -49,8 +62,13 @@ app.get('/api/health', (req, res) => {
 });
 
 // Catch-all handler for API routes
-app.use((req, res) => {
+app.use('/api/*', (req, res) => {
   res.status(404).json({ error: 'API endpoint not found' });
+});
+
+// Catch-all handler for non-API routes
+app.use((req, res) => {
+  res.status(404).json({ error: 'Route not found' });
 });
 
 // Start server

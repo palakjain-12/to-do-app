@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../config/database');
+const Task = require('../models/Task');
 const { authenticateToken } = require('../middleware/auth');
 
 // Apply authentication to all task routes
@@ -9,14 +9,26 @@ router.use(authenticateToken);
 // GET all tasks for authenticated user
 router.get('/', async (req, res) => {
   try {
-    const userId = req.user._id.toString(); // MongoDB ObjectId as string
-    const result = await pool.query(
-      'SELECT * FROM tasks WHERE user_id = $1 ORDER BY created_at DESC', 
-      [userId]
-    );
-    res.json(result.rows);
-  } catch (err) {
-    console.error('GET /tasks error:', err);
+    const userId = req.user._id;
+    
+    const tasks = await Task.find({ user_id: userId })
+      .sort({ created_at: -1 })
+      .lean();
+
+    // Transform the response to match your frontend expectations
+    const transformedTasks = tasks.map(task => ({
+      id: task._id,
+      title: task.title,
+      description: task.description,
+      completed: task.completed,
+      user_id: task.user_id,
+      created_at: task.created_at,
+      updated_at: task.updated_at
+    }));
+
+    res.json(transformedTasks);
+  } catch (error) {
+    console.error('GET /tasks error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -25,24 +37,33 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user._id.toString();
+    const userId = req.user._id;
     
-    if (!id || isNaN(parseInt(id))) {
-      return res.status(400).json({ error: 'Invalid task ID' });
+    // Validate ObjectId format
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ error: 'Invalid task ID format' });
     }
     
-    const result = await pool.query(
-      'SELECT * FROM tasks WHERE id = $1 AND user_id = $2', 
-      [id, userId]
-    );
+    const task = await Task.findOne({ _id: id, user_id: userId }).lean();
     
-    if (result.rows.length === 0) {
+    if (!task) {
       return res.status(404).json({ error: 'Task not found' });
     }
     
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error('GET /tasks/:id error:', err);
+    // Transform the response
+    const transformedTask = {
+      id: task._id,
+      title: task.title,
+      description: task.description,
+      completed: task.completed,
+      user_id: task.user_id,
+      created_at: task.created_at,
+      updated_at: task.updated_at
+    };
+
+    res.json(transformedTask);
+  } catch (error) {
+    console.error('GET /tasks/:id error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -51,20 +72,40 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { title, description } = req.body;
-    const userId = req.user._id.toString();
+    const userId = req.user._id;
     
     if (!title || title.trim() === '') {
       return res.status(400).json({ error: 'Title is required' });
     }
     
-    const result = await pool.query(
-      'INSERT INTO tasks (title, description, user_id) VALUES ($1, $2, $3) RETURNING *',
-      [title.trim(), description || '', userId]
-    );
+    const newTask = new Task({
+      title: title.trim(),
+      description: description || '',
+      user_id: userId
+    });
     
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    console.error('POST /tasks error:', err);
+    const savedTask = await newTask.save();
+    
+    // Transform the response
+    const transformedTask = {
+      id: savedTask._id,
+      title: savedTask.title,
+      description: savedTask.description,
+      completed: savedTask.completed,
+      user_id: savedTask.user_id,
+      created_at: savedTask.created_at,
+      updated_at: savedTask.updated_at
+    };
+    
+    res.status(201).json(transformedTask);
+  } catch (error) {
+    console.error('POST /tasks error:', error);
+    
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ error: messages.join(', ') });
+    }
+    
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -74,10 +115,11 @@ router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, completed } = req.body;
-    const userId = req.user._id.toString();
+    const userId = req.user._id;
     
-    if (!id || isNaN(parseInt(id))) {
-      return res.status(400).json({ error: 'Invalid task ID' });
+    // Validate ObjectId format
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ error: 'Invalid task ID format' });
     }
     
     if (title === undefined || title === null || title.trim() === '') {
@@ -88,27 +130,42 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({ error: 'Completed status is required' });
     }
     
-    // Check if task exists and belongs to user
-    const existsResult = await pool.query(
-      'SELECT id FROM tasks WHERE id = $1 AND user_id = $2', 
-      [parseInt(id), userId]
-    );
+    const updatedTask = await Task.findOneAndUpdate(
+      { _id: id, user_id: userId },
+      {
+        title: title.trim(),
+        description: description || '',
+        completed: Boolean(completed),
+        updated_at: new Date()
+      },
+      { new: true, runValidators: true }
+    ).lean();
     
-    if (existsResult.rows.length === 0) {
+    if (!updatedTask) {
       return res.status(404).json({ error: 'Task not found' });
     }
     
-    // Update the task
-    const result = await pool.query(
-      'UPDATE tasks SET title = $1, description = $2, completed = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $4 AND user_id = $5 RETURNING *',
-      [title.trim(), description || '', Boolean(completed), parseInt(id), userId]
-    );
+    // Transform the response
+    const transformedTask = {
+      id: updatedTask._id,
+      title: updatedTask.title,
+      description: updatedTask.description,
+      completed: updatedTask.completed,
+      user_id: updatedTask.user_id,
+      created_at: updatedTask.created_at,
+      updated_at: updatedTask.updated_at
+    };
     
-    res.json(result.rows[0]);
+    res.json(transformedTask);
+  } catch (error) {
+    console.error('PUT /tasks/:id error:', error);
     
-  } catch (err) {
-    console.error('PUT /tasks/:id error:', err);
-    res.status(500).json({ error: 'Server error', details: err.message });
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ error: messages.join(', ') });
+    }
+    
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -116,24 +173,39 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user._id.toString();
+    const userId = req.user._id;
     
-    if (!id || isNaN(parseInt(id))) {
-      return res.status(400).json({ error: 'Invalid task ID' });
+    // Validate ObjectId format
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ error: 'Invalid task ID format' });
     }
     
-    const result = await pool.query(
-      'DELETE FROM tasks WHERE id = $1 AND user_id = $2 RETURNING *', 
-      [parseInt(id), userId]
-    );
+    const deletedTask = await Task.findOneAndDelete({ 
+      _id: id, 
+      user_id: userId 
+    }).lean();
     
-    if (result.rows.length === 0) {
+    if (!deletedTask) {
       return res.status(404).json({ error: 'Task not found' });
     }
     
-    res.json({ message: 'Task deleted successfully', task: result.rows[0] });
-  } catch (err) {
-    console.error('DELETE /tasks/:id error:', err);
+    // Transform the response
+    const transformedTask = {
+      id: deletedTask._id,
+      title: deletedTask.title,
+      description: deletedTask.description,
+      completed: deletedTask.completed,
+      user_id: deletedTask.user_id,
+      created_at: deletedTask.created_at,
+      updated_at: deletedTask.updated_at
+    };
+    
+    res.json({ 
+      message: 'Task deleted successfully', 
+      task: transformedTask 
+    });
+  } catch (error) {
+    console.error('DELETE /tasks/:id error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

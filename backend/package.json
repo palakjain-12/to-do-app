@@ -1,7 +1,7 @@
 {
   "name": "todo-backend",
   "version": "1.0.0",
-  "description": "Backend API for Todo App",
+  "description": "Backend API for Todo App with MongoDB",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -14,8 +14,7 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.17.0",
-    "mongoose": "^8.16.0",
-    "pg": "^8.16.2"
+    "mongoose": "^8.16.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
@@ -23,9 +22,10 @@
   "keywords": [
     "todo",
     "api",
-    "postgresql",
     "mongodb",
-    "authentication"
+    "authentication",
+    "nodejs",
+    "express"
   ],
   "author": "",
   "license": "ISC"

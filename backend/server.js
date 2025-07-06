@@ -1,15 +1,16 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-
 // Use the simpler MongoDB connection
 const connectMongoDB = require('./config/mongodb');
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
 connectMongoDB();
+
+// Frontend URL configuration
+const frontendUrl = process.env.FRONTEND_URL || 'https://soft-elf-876a48.netlify.app';
 
 // Enhanced CORS configuration
 const corsOptions = {
@@ -47,14 +48,9 @@ const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 
-// Root route
+// Root route - redirect to frontend
 app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Todo API Server is running!',
-    version: '1.0.0',
-    status: 'healthy',
-    timestamp: new Date().toISOString()
-  });
+  res.redirect(`${frontendUrl}`);
 });
 
 // API info route
@@ -125,7 +121,7 @@ process.on('SIGINT', () => {
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📱 Frontend URL: ${process.env.FRONTEND_URL || 'https://soft-elf-876a48.netlify.app'}`);
+  console.log(`📱 Frontend URL: ${frontendUrl}`);
   console.log('🔗 CORS enabled for origins:', corsOptions.origin);
   console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
 });

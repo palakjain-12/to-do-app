@@ -16,9 +16,9 @@ const TodoApp = () => {
   const [error, setError] = useState(null);
   const { token } = useAuth();
 
-  // API base URL - use relative path for production
+  // API base URL - use your backend URL for production
   const API_URL = process.env.NODE_ENV === 'production' 
-    ? '/api/tasks' 
+    ? 'https://to-do-app-if4l.onrender.com/api/tasks' 
     : 'http://localhost:5000/api/tasks';
 
   // Fetch tasks from backend with authentication
@@ -29,7 +29,8 @@ const TodoApp = () => {
       
       const response = await fetch(API_URL, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
       
@@ -87,8 +88,15 @@ const TodoApp = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create task');
+        let errorMessage = 'Failed to create task';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // If response is not JSON, use status text
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
       const newTask = await response.json();
@@ -129,8 +137,14 @@ const TodoApp = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update task');
+        let errorMessage = 'Failed to update task';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
       // Update local state
@@ -154,13 +168,20 @@ const TodoApp = () => {
       const response = await fetch(`${API_URL}/${id}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete task');
+        let errorMessage = 'Failed to delete task';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
       // Remove from local state

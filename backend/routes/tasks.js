@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../config/database');
+const { pool } = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
 
 // Apply authentication to all task routes
@@ -9,7 +9,7 @@ router.use(authenticateToken);
 // GET all tasks for authenticated user
 router.get('/', async (req, res) => {
   try {
-    const userId = req.user._id.toString();
+    const userId = req.user._id.toString(); // MongoDB ObjectId as string
     const result = await pool.query(
       'SELECT * FROM tasks WHERE user_id = $1 ORDER BY created_at DESC', 
       [userId]

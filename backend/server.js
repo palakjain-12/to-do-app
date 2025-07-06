@@ -2,14 +2,31 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const connectMongoDB = require('./config/mongodb');
+const { testConnection } = require('./config/database');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB
-connectMongoDB();
+// Connect to both databases
+const initializeDatabases = async () => {
+  try {
+    // Connect to MongoDB
+    await connectMongoDB();
+    
+    // Test PostgreSQL connection
+    await testConnection();
+    
+    console.log('✅ All databases connected successfully');
+  } catch (error) {
+    console.error('❌ Database connection failed:', error);
+    process.exit(1);
+  }
+};
 
-// Single CORS configuration
+// Initialize databases
+initializeDatabases();
+
+// Enhanced CORS configuration
 const corsOptions = {
   origin: [
     'https://soft-elf-876a48.netlify.app', // Production URL
@@ -24,11 +41,18 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
 
-// Apply CORS middleware once
+// Apply CORS middleware
 app.use(cors(corsOptions));
 
-// Middleware
-app.use(express.json());
+// Body parsing middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
+  next();
+});
 
 // Import routes
 const taskRoutes = require('./routes/tasks');
@@ -38,21 +62,42 @@ const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 
-// Root route - redirect to frontend login page
+// Root route - redirect to frontend
 app.get('/', (req, res) => {
-  // Redirect to your frontend login page
   const frontendUrl = process.env.Frontend_URL || 'https://soft-elf-876a48.netlify.app';
-  res.redirect(`${frontendUrl}`);
+  res.redirect(`${frontendUrl}/login`);
 });
 
-// Basic route
+// API info route
 app.get('/api', (req, res) => {
-  res.json({ message: 'Todo API with Authentication is running!' });
+  res.json({ 
+    message: 'Todo API with Authentication is running!',
+    version: '1.0.0',
+    databases: {
+      mongodb: 'Connected (Users)',
+      postgresql: 'Connected (Tasks)'
+    },
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: process.memoryUsage()
+  });
+});
+
+// Global error handler
+app.use((error, req, res, next) => {
+  console.error('Global error handler:', error);
+  res.status(500).json({ 
+    error: 'Internal server error',
+    message: process.env.NODE_ENV === 'development' ? error.message : undefined
+  });
 });
 
 // Catch-all handler for unmatched routes
@@ -60,12 +105,37 @@ app.use((req, res) => {
   res.status(404).json({ 
     error: 'Route not found',
     path: req.originalUrl,
-    method: req.method
+    method: req.method,
+    availableRoutes: [
+      'GET /api',
+      'GET /api/health',
+      'POST /api/auth/register',
+      'POST /api/auth/login',
+      'GET /api/auth/verify',
+      'GET /api/tasks',
+      'POST /api/tasks',
+      'PUT /api/tasks/:id',
+      'DELETE /api/tasks/:id'
+    ]
   });
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully');
+  process.exit(0);
 });
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log('CORS enabled for origins:', corsOptions.origin);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📱 Frontend URL: ${process.env.Frontend_URL || 'https://soft-elf-876a48.netlify.app'}`);
+  console.log('🔗 CORS enabled for origins:', corsOptions.origin);
 });
+
+module.exports = app;
